@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="isec.loan.mapper.RiskMapper">
+    <resultMap id="BaseResultMap" type="isec.loan.entity.Risk">
+
+    </resultMap>
+
+    <update id="updateRiskLoan" >
+		update risk set
+		loan_id = #{loanId}
+		where
+		user_id = #{userId} and loan_id = ""
+	</update>
+</mapper>
