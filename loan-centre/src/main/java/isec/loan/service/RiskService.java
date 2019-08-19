@@ -40,10 +40,10 @@ public class RiskService extends AbstractService<Risk> {
     @Value(value = "${dingxiang.accreditUrl}")
     private String DINGXIAN_ACCREDIT_URL;
 
-    public void saveMobileRiskScore(String userId, String mobile) {
+    public String saveMobileRiskScore(String userId, String mobile) {
         JSONObject postData = new JSONObject();
         postData.put("mobile", mobile);
-        saveRisk(userId, remoteService.DX_PHONE_RISK_SCORE_URL, postData);
+        return saveRisk(userId, remoteService.DX_PHONE_RISK_SCORE_URL, postData);
     }
 
     public String getCarrierAccreditUrl(String mobile, String name, String idcard, String backUrl) {
@@ -87,12 +87,12 @@ public class RiskService extends AbstractService<Risk> {
         }
     }
 
-    public void saveRiskAssess(String userId, String mobile, String name, String idcard) {
+    public String saveRiskAssess(String userId, String mobile, String name, String idcard) {
         JSONObject postData = new JSONObject();
         postData.put("mobile", mobile);
         postData.put("name", name);
         postData.put("idcard", idcard);
-        saveRisk(userId, remoteService.DX_RISK_ASSESS_URL, postData);
+        return saveRisk(userId, remoteService.DX_RISK_ASSESS_URL, postData);
     }
 
     public void saveCarrierReport(String userId, String mobile, String taskId) {
@@ -145,12 +145,11 @@ public class RiskService extends AbstractService<Risk> {
             JSONObject retJson = remoteService.callDx(remoteService.DX_BASE_URL + apiKey, postData);
             risk.setResponse(retJson.toJSONString());
             risk.setStatus("success");
-            logger.info(" create new risk");
 
             //更新芝麻分
-            updateZhimaScore(userId, retJson);
-
-
+            if(remoteService.DX_TAOBAO_ANAY_REPORT_URL.equals(apiKey)) {
+            	updateZhimaScore(userId, retJson);
+            }
         } catch (Exception e) {
             logger.error("saveRisk error ", e);
             JSONObject error = new JSONObject();
@@ -168,23 +167,19 @@ public class RiskService extends AbstractService<Risk> {
      * @param userId
      * @param retJson
      */
-    private void updateZhimaScore(String userId, JSONObject retJson) {
+	private void updateZhimaScore(String userId, JSONObject retJson) {
 
-        UserInfo userInfo = userInfoService.findById(userId);
-        if (null != userInfo) {
-            try {
-                int taobaoZmscore = retJson.getJSONObject("data").getJSONObject("wealthInfo").getJSONObject("totalssets").getIntValue("taobaoZmscore");
-                userInfo.setZhimaScore(taobaoZmscore);
-                userInfo.setZhimaVerify(1);
-                userInfo.setUpdateTime(S.getCurrentTimestamp());
-                userInfoService.update(userInfo);
-                logger.info("update zhimaScore and zhimaVerify success,userId:{}", userId);
-            } catch (Exception e) {
-                logger.error("update zhimaScore and zhimaVerify error,", e);
-            }
-
-        }
-    }
+		UserInfo userInfo = userInfoService.findById(userId);
+		if (null != userInfo) {
+			int taobaoZmscore = retJson.getJSONObject("data").getJSONObject("wealthInfo").getJSONObject("totalssets")
+					.getIntValue("taobaoZmscore");
+			userInfo.setZhimaScore(taobaoZmscore);
+			userInfo.setZhimaVerify(1);
+			userInfo.setUpdateTime(S.getCurrentTimestamp());
+			userInfoService.update(userInfo);
+			logger.info("update zhimaScore and zhimaVerify success,userId:{}", userId);
+		}
+	}
 
     public void saveOrUpdateRisk(Risk risk) {
         String where = "loan_id ='' and user_id='" + risk.getUserId() + "'" + " and api_key='"

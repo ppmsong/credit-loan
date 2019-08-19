@@ -7,345 +7,269 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = "config")
 public class Config {
 
-	private String comsunny;
-	private String comsunnyBillApi;
-	private String appId;// 支付应用ID
-	private String appSign;// 支付验签秘钥
-	private String masterSecret; // 支付回调秘钥
-	private String return_url;
-	private String nofify_url;
-	private String SMSYUNPIANAPI = "https://sms.yunpian.com/v2/sms/single_send.json";
-	private String SMSYUNPIANKEY = "14b463cb38c02f0ea9fc09700e915959";
-	private String SMSYUNPIANTEMP = "【橙子卡包】您的验证码是";
-	private String smsHead;
-
-	// =======================虚拟卡常量======================
-	private String CUSTOMERID;
-	private String PRIVATEKEY;
-	private String APIURL;
-	private String CALLBACKURL;
-
-	// RSA
-	private String RSAenable;
-	private String RSAPrivateKey;
-	private String RSAPublicKey;
-
-	// rabbitMQ
-	private String address;
-	private String username;
-	private String password;
-	private String normal;
-	private String directExchange;
-	private int maxCount;
-	private String maxDelayNum;
-	
-	//wish
-	private String wishUrl;
-	
-	//极验
-	private String geetestId;
-	private String geetestKey;
-	
-	//odin
-	private String odinPushKey;
-	private String odinPushSercet;
-	private String odinPushUrl;
-
-	//愿望接口应用
-	private String wishAppId;
-	private String wishAppSign;
-	private String wishMasterSecret;
-	
-	//签名
-	private String signKey;
-	private String signOnOff;
-
-	public String getOdinPushKey() {
-		return odinPushKey;
-	}
-
-	public void setOdinPushKey(String odinPushKey) {
-		this.odinPushKey = odinPushKey;
-	}
-
-	public String getOdinPushSercet() {
-		return odinPushSercet;
-	}
-
-	public void setOdinPushSercet(String odinPushSercet) {
-		this.odinPushSercet = odinPushSercet;
-	}
-
-	public String getOdinPushUrl() {
-		return odinPushUrl;
-	}
-
-	public void setOdinPushUrl(String odinPushUrl) {
-		this.odinPushUrl = odinPushUrl;
-	}
-
-	public String getWishAppId() {
-		return wishAppId;
-	}
-
-	public void setWishAppId(String wishAppId) {
-		this.wishAppId = wishAppId;
-	}
-
-	public String getWishAppSign() {
-		return wishAppSign;
-	}
-
-	public void setWishAppSign(String wishAppSign) {
-		this.wishAppSign = wishAppSign;
-	}
-
-	public String getWishMasterSecret() {
-		return wishMasterSecret;
-	}
-
-	public void setWishMasterSecret(String wishMasterSecret) {
-		this.wishMasterSecret = wishMasterSecret;
-	}
-
-	public String getComsunnyBillApi() {
-		return comsunnyBillApi;
-	}
+    private String comsunny;
+    private String comsunnyBillApi;
+    private String appId;
+    private String appSign;
+    private String masterSecret;
+    private String return_url;
+    private String nofify_url;
+    private String SMSYUNPIANAPI;
+    private String SMSYUNPIANKEY;
+    private String SMSYUNPIANTEMP;
+    private String smsHead;
+
+
+    // RSA
+    private String RSAenable;
+    private String RSAPrivateKey;
+    private String RSAPublicKey;
+
+    // rabbitMQ
+    private String address;
+    private String username;
+    private String password;
+    private String normal;
+    private String directExchange;
+    private int maxCount;
+    private String maxDelayNum;
+
+
+    //极验
+    private String geetestId;
+    private String geetestKey;
+
+    //odin
+    private String odinPushKey;
+    private String odinPushSercet;
+    private String odinPushUrl;
+
+    //签名
+    private String signKey;
+    private String signOnOff;
+
+    public String getOdinPushKey() {
+        return odinPushKey;
+    }
+
+    public void setOdinPushKey(String odinPushKey) {
+        this.odinPushKey = odinPushKey;
+    }
+
+    public String getOdinPushSercet() {
+        return odinPushSercet;
+    }
+
+    public void setOdinPushSercet(String odinPushSercet) {
+        this.odinPushSercet = odinPushSercet;
+    }
+
+    public String getOdinPushUrl() {
+        return odinPushUrl;
+    }
+
+    public void setOdinPushUrl(String odinPushUrl) {
+        this.odinPushUrl = odinPushUrl;
+    }
+
+    public String getComsunnyBillApi() {
+        return comsunnyBillApi;
+    }
+
+    public void setComsunnyBillApi(String comsunnyBillApi) {
+        this.comsunnyBillApi = comsunnyBillApi;
+    }
+
+    public String getComsunny() {
+        return comsunny;
+    }
+
+    public void setComsunny(String comsunny) {
+        this.comsunny = comsunny;
+    }
+
+    public String getAppId() {
+        return appId;
+    }
+
+    public void setAppId(String appId) {
+        this.appId = appId;
+    }
+
+    public String getAppSign() {
+        return appSign;
+    }
+
+    public void setAppSign(String appSign) {
+        this.appSign = appSign;
+    }
+
+    public String getReturn_url() {
+        return return_url;
+    }
+
+    public void setReturn_url(String return_url) {
+        this.return_url = return_url;
+    }
 
-	public void setComsunnyBillApi(String comsunnyBillApi) {
-		this.comsunnyBillApi = comsunnyBillApi;
-	}
+    public String getNofify_url() {
+        return nofify_url;
+    }
 
-	public String getComsunny() {
-		return comsunny;
-	}
+    public void setNofify_url(String nofify_url) {
+        this.nofify_url = nofify_url;
+    }
 
-	public void setComsunny(String comsunny) {
-		this.comsunny = comsunny;
-	}
+    public String getSMSYUNPIANAPI() {
+        return SMSYUNPIANAPI;
+    }
 
-	public String getAppId() {
-		return appId;
-	}
+    public void setSMSYUNPIANAPI(String sMSYUNPIANAPI) {
+        SMSYUNPIANAPI = sMSYUNPIANAPI;
+    }
 
-	public void setAppId(String appId) {
-		this.appId = appId;
-	}
+    public String getSMSYUNPIANKEY() {
+        return SMSYUNPIANKEY;
+    }
 
-	public String getAppSign() {
-		return appSign;
-	}
+    public void setSMSYUNPIANKEY(String sMSYUNPIANKEY) {
+        SMSYUNPIANKEY = sMSYUNPIANKEY;
+    }
 
-	public void setAppSign(String appSign) {
-		this.appSign = appSign;
-	}
+    public String getSMSYUNPIANTEMP() {
+        return SMSYUNPIANTEMP;
+    }
 
-	public String getReturn_url() {
-		return return_url;
-	}
+    public void setSMSYUNPIANTEMP(String sMSYUNPIANTEMP) {
+        SMSYUNPIANTEMP = sMSYUNPIANTEMP;
+    }
 
-	public void setReturn_url(String return_url) {
-		this.return_url = return_url;
-	}
+    public String getRSAenable() {
+        return RSAenable;
+    }
 
-	public String getNofify_url() {
-		return nofify_url;
-	}
+    public void setRSAenable(String RSAenable) {
+        this.RSAenable = RSAenable;
+    }
 
-	public void setNofify_url(String nofify_url) {
-		this.nofify_url = nofify_url;
-	}
+    public String getRSAPrivateKey() {
+        return RSAPrivateKey;
+    }
 
-	public String getSMSYUNPIANAPI() {
-		return SMSYUNPIANAPI;
-	}
+    public void setRSAPrivateKey(String rSAPrivateKey) {
+        RSAPrivateKey = rSAPrivateKey;
+    }
 
-	public void setSMSYUNPIANAPI(String sMSYUNPIANAPI) {
-		SMSYUNPIANAPI = sMSYUNPIANAPI;
-	}
+    public String getRSAPublicKey() {
+        return RSAPublicKey;
+    }
 
-	public String getSMSYUNPIANKEY() {
-		return SMSYUNPIANKEY;
-	}
+    public void setRSAPublicKey(String rSAPublicKey) {
+        RSAPublicKey = rSAPublicKey;
+    }
 
-	public void setSMSYUNPIANKEY(String sMSYUNPIANKEY) {
-		SMSYUNPIANKEY = sMSYUNPIANKEY;
-	}
+    public String getNormal() {
+        return normal;
+    }
 
-	public String getSMSYUNPIANTEMP() {
-		return SMSYUNPIANTEMP;
-	}
+    public void setNormal(String normal) {
+        this.normal = normal;
+    }
 
-	public void setSMSYUNPIANTEMP(String sMSYUNPIANTEMP) {
-		SMSYUNPIANTEMP = sMSYUNPIANTEMP;
-	}
+    public String getDirectExchange() {
+        return directExchange;
+    }
 
-	public String getCUSTOMERID() {
-		return CUSTOMERID;
-	}
+    public void setDirectExchange(String directExchange) {
+        this.directExchange = directExchange;
+    }
 
-	public void setCUSTOMERID(String cUSTOMERID) {
-		CUSTOMERID = cUSTOMERID;
-	}
+    public int getMaxCount() {
+        return maxCount;
+    }
 
-	public String getPRIVATEKEY() {
-		return PRIVATEKEY;
-	}
+    public void setMaxCount(int maxCount) {
+        this.maxCount = maxCount;
+    }
 
-	public void setPRIVATEKEY(String pRIVATEKEY) {
-		PRIVATEKEY = pRIVATEKEY;
-	}
+    public String getMaxDelayNum() {
+        return maxDelayNum;
+    }
 
-	public String getAPIURL() {
-		return APIURL;
-	}
+    public void setMaxDelayNum(String maxDelayNum) {
+        this.maxDelayNum = maxDelayNum;
+    }
 
-	public void setAPIURL(String aPIURL) {
-		APIURL = aPIURL;
-	}
+    public String getAddress() {
+        return address;
+    }
 
-	public String getCALLBACKURL() {
-		return CALLBACKURL;
-	}
+    public void setAddress(String address) {
+        this.address = address;
+    }
 
-	public void setCALLBACKURL(String cALLBACKURL) {
-		CALLBACKURL = cALLBACKURL;
-	}
+    public String getUsername() {
+        return username;
+    }
 
-	public String getRSAenable() {
-		return RSAenable;
-	}
+    public void setUsername(String username) {
+        this.username = username;
+    }
 
-	public void setRSAenable(String RSAenable) {
-		this.RSAenable = RSAenable;
-	}
+    public String getPassword() {
+        return password;
+    }
 
-	public String getRSAPrivateKey() {
-		return RSAPrivateKey;
-	}
+    public void setPassword(String password) {
+        this.password = password;
+    }
 
-	public void setRSAPrivateKey(String rSAPrivateKey) {
-		RSAPrivateKey = rSAPrivateKey;
-	}
+    public String getMasterSecret() {
+        return masterSecret;
+    }
 
-	public String getRSAPublicKey() {
-		return RSAPublicKey;
-	}
+    public void setMasterSecret(String masterSecret) {
+        this.masterSecret = masterSecret;
+    }
 
-	public void setRSAPublicKey(String rSAPublicKey) {
-		RSAPublicKey = rSAPublicKey;
-	}
+    public String getGeetestId() {
+        return geetestId;
+    }
 
-	public String getNormal() {
-		return normal;
-	}
+    public void setGeetestId(String geetestId) {
+        this.geetestId = geetestId;
+    }
 
-	public void setNormal(String normal) {
-		this.normal = normal;
-	}
+    public String getGeetestKey() {
+        return geetestKey;
+    }
 
-	public String getDirectExchange() {
-		return directExchange;
-	}
+    public void setGeetestKey(String geetestKey) {
+        this.geetestKey = geetestKey;
+    }
 
-	public void setDirectExchange(String directExchange) {
-		this.directExchange = directExchange;
-	}
+    public String getSmsHead() {
+        return smsHead;
+    }
 
-	public int getMaxCount() {
-		return maxCount;
-	}
+    public void setSmsHead(String smsHead) {
+        this.smsHead = smsHead;
+    }
 
-	public void setMaxCount(int maxCount) {
-		this.maxCount = maxCount;
-	}
+    public String getSignKey() {
+        return signKey;
+    }
 
-	public String getMaxDelayNum() {
-		return maxDelayNum;
-	}
+    public void setSignKey(String signKey) {
+        this.signKey = signKey;
+    }
 
-	public void setMaxDelayNum(String maxDelayNum) {
-		this.maxDelayNum = maxDelayNum;
-	}
+    public String getSignOnOff() {
+        return signOnOff;
+    }
 
-	public String getAddress() {
-		return address;
-	}
-
-	public void setAddress(String address) {
-		this.address = address;
-	}
-
-	public String getUsername() {
-		return username;
-	}
-
-	public void setUsername(String username) {
-		this.username = username;
-	}
-
-	public String getPassword() {
-		return password;
-	}
-
-	public void setPassword(String password) {
-		this.password = password;
-	}
-
-	public String getMasterSecret() {
-		return masterSecret;
-	}
-
-	public void setMasterSecret(String masterSecret) {
-		this.masterSecret = masterSecret;
-	}
-
-	public String getWishUrl() {
-		return wishUrl;
-	}
-
-	public void setWishUrl(String wishUrl) {
-		this.wishUrl = wishUrl;
-	}
-
-	public String getGeetestId() {
-		return geetestId;
-	}
-
-	public void setGeetestId(String geetestId) {
-		this.geetestId = geetestId;
-	}
-
-	public String getGeetestKey() {
-		return geetestKey;
-	}
-
-	public void setGeetestKey(String geetestKey) {
-		this.geetestKey = geetestKey;
-	}
-
-	public String getSmsHead() {
-		return smsHead;
-	}
-
-	public void setSmsHead(String smsHead) {
-		this.smsHead = smsHead;
-	}
-
-	public String getSignKey() {
-		return signKey;
-	}
-
-	public void setSignKey(String signKey) {
-		this.signKey = signKey;
-	}
-
-	public String getSignOnOff() {
-		return signOnOff;
-	}
-
-	public void setSignOnOff(String signOnOff) {
-		this.signOnOff = signOnOff;
-	}
+    public void setSignOnOff(String signOnOff) {
+        this.signOnOff = signOnOff;
+    }
 
 }

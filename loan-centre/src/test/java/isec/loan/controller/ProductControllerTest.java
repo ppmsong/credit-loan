@@ -65,7 +65,7 @@ public class ProductControllerTest extends BasicTest {
 		MultiValueMap<String, String> paramValues = new LinkedMultiValueMap<>();
 		paramValues.add("productId", "2");
 		
-		mockMvc.perform(MockMvcRequestBuilders.post("/product/queryMessageDetails").params(paramValues)
+		mockMvc.perform(MockMvcRequestBuilders.post("/product/queryProductDetails").params(paramValues)
 				.accept(MediaType.APPLICATION_JSON)).andExpect(content().contentType("application/json;charset=UTF-8"))
 				.andExpect(MockMvcResultMatchers.status().isOk())
 				// 断言

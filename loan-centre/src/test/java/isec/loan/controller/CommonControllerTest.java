@@ -10,6 +10,8 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.result.MockMvcResultHandlers;
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -36,5 +38,20 @@ public class CommonControllerTest extends BasicTest {
                 .andExpect(MockMvcResultMatchers.status().isOk())
                 // 断言
                 .andDo(MockMvcResultHandlers.print()).andReturn();
-    }
+    }    
+    
+    
+    
+    @Test
+	public void queryAdverts() throws Exception {
+    	MultiValueMap<String, String> paramValues = new LinkedMultiValueMap<>();
+		paramValues.add("advPosition", "1");
+		
+		mockMvc.perform(MockMvcRequestBuilders.post("/common/queryAdverts").params(paramValues).accept(MediaType.APPLICATION_JSON))
+				.andExpect(content().contentType("application/json;charset=UTF-8"))
+				.andExpect(MockMvcResultMatchers.status().isOk())
+				// 断言
+				.andExpect(jsonPath("$.code").value("ok")).andExpect(jsonPath("$.data").isNotEmpty())
+				.andDo(MockMvcResultHandlers.print()).andReturn();
+	}    
 }

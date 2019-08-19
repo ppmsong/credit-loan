@@ -4,8 +4,8 @@ package isec.loan.entity.enums;
  * 是否删除状态
  */
 public enum IsDelete {
-    // 0-未删除，1-已删除
-    NO(0, "no"), YES(1, "yes");
+    // 1-未删除，2-已删除
+    NO(1, "no"), YES(2, "yes");
 
     private int key;
     private String value;

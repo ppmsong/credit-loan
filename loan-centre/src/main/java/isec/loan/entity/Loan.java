@@ -30,7 +30,7 @@ public class Loan {
     }
 
     public Loan(String userId, String productId, int borrowMoney, BigDecimal rete, int riskCost, int days, BigDecimal overdueRate) {
-        this.loanId = S.getUuid();
+        this.loanId = "L"+S.createReqNo();
         this.userId = userId;
         this.productId = productId;
         this.borrowMoney = borrowMoney;

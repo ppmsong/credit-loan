@@ -68,15 +68,14 @@ public class RiskController {
         risk.setApiKey("carrierGatherFinish");
         risk.setResponse(JSONObject.toJSONString(map));
         if (!"true".equals(result)) {
-            logger.info("运营商报告采集失败:" + message);
+            logger.error("运营商报告采集失败:" + message);
             risk.setStatus("fail");
         } else {
             risk.setStatus("success");
             logger.info("运营商报告采集成功");
+            riskService.saveCarrierReport(userId, mobile, taskId);
         }
-
         riskService.saveOrUpdateRisk(risk);
-        riskService.saveCarrierReport(userId, mobile, taskId);
     }
 
     @GetMapping(value = "callBackOfCarrierAccreditFinish")
@@ -150,18 +149,15 @@ public class RiskController {
         risk.setApiKey("taoBaoGatherFinish");
         risk.setResponse(JSONObject.toJSONString(map));
         if (!"true".equals(result)) {
-            logger.info("淘宝数据采集失败:" + message);
+            logger.error("淘宝数据采集失败:" + message);
             risk.setStatus("fail");
         } else {
             risk.setStatus("success");
             logger.info("淘宝数据采集成功");
-
-            //更新芝麻分
-
+            riskService.saveTaoBaoAnayReport(userId, taskId);
         }
 
         riskService.saveOrUpdateRisk(risk);
-        riskService.saveTaoBaoAnayReport(userId, taskId);
     }
 
 

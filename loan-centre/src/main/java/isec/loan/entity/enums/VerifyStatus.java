@@ -6,7 +6,7 @@ package isec.loan.entity.enums;
  * @author Administrator
  */
 public enum VerifyStatus {
-    // 0-未删除，1 成功  2 认证中  3 失败
+    // 0-未认证，1 成功  2 认证中  3 失败
     NO(0, "no"), YES(1, "yes"), CHECKING(2, "checking"), FAIL(3, "fail");
 
     private int key;

@@ -3,6 +3,7 @@ package isec.loan.entity;
 import javax.persistence.Id;
 
 import isec.base.util.S;
+import isec.loan.entity.enums.IsDelete;
 
 public class User {
 
@@ -33,7 +34,7 @@ public class User {
         this.status = 1;
         this.createTime = S.getCurrentTimestamp();
         this.updateTime = 0;
-        this.isDelete = 0;
+        this.isDelete = IsDelete.NO.getKey();
     }
 
 

@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.constraints.NotBlank;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -69,14 +71,16 @@ public class ProductController {
         Map<String, Object> data = new HashMap<String, Object>();
         Product product = productService.findById(productId);
 
-        data.put("borrowMoney", product.getBorrowMoney() / 100);
+        data.put("borrowMoney", moneyCalculateService.fenToYuan(product.getBorrowMoney()));
         data.put("days", product.getDays());
-        data.put("riskCost", product.getRiskCost() / 100);
+        data.put("riskCost", moneyCalculateService.fenToYuan(product.getRiskCost()));
         data.put("realMoney", moneyCalculateService.getRealMoney(product.getBorrowMoney(), product.getRiskCost()));
         data.put("repayMoney",
-                moneyCalculateService.getRepayMoney(product.getRete(), product.getBorrowMoney(), product.getDays()));
+                moneyCalculateService.getProductRepayMoney(product.getRete(), product.getBorrowMoney(), product.getDays()));
+        //借款利息
+        data.put("rateMoney",moneyCalculateService.getRateMoney(product.getRete(), product.getBorrowMoney(), product.getDays()).setScale(2,BigDecimal.ROUND_DOWN));
         data.put("overdueMoney",
-                moneyCalculateService.getOverdueMoney(product.getOverdueRate(), product.getBorrowMoney()));
+                moneyCalculateService.getDayOverdueMoney(product.getOverdueRate(), product.getBorrowMoney()));
 
         return data;
 

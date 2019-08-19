@@ -23,7 +23,7 @@ public class LoanControllerTest extends BasicTest {
 
 	@Before
 	public void setupMockMvc() throws Exception {
-		super.loginBySmsCode("15172538022");
+		super.loginBySmsCode("18888888888");
 	}
 
 	@Test
@@ -43,4 +43,20 @@ public class LoanControllerTest extends BasicTest {
 
 	}
 
+    @Test
+    public void refuse() throws Exception {
+
+		MultiValueMap<String, String> paramValues = new LinkedMultiValueMap<>();
+		paramValues.add("token", token);
+		paramValues.add("loanId", "L20190816022431840595164");
+		paramValues.add("operator", "1");
+
+		mockMvc.perform(
+				MockMvcRequestBuilders.post("/loan/refuse").params(paramValues).accept(MediaType.APPLICATION_JSON))
+				.andExpect(content().contentType("application/json;charset=UTF-8"))
+				.andExpect(MockMvcResultMatchers.status().isOk())
+				// 断言
+				.andExpect(jsonPath("$.code").value("ok"))
+				.andDo(MockMvcResultHandlers.print()).andReturn();
+    }
 }

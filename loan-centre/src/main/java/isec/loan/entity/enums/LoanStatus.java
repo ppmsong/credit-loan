@@ -1,17 +1,16 @@
 package isec.loan.entity.enums;
 
 /**
- * 贷款状态
+ * 贷款申请状态
  *
  * @author p
  * @date 2019-07-23
  */
 public enum LoanStatus {
-    //1 待审核 2 带放款  3 还款中  4 展期  5已关闭 6申请失败
+    //还款状态 1 待审核 2 待放款  3 还款中  4 展期  5已关闭 6申请失败
     CHECKING(1, "checking"), LOANING(2, "loaning"), REPAYING(3, "repaying"), OVERDUW(4,
-            "overdue"), CLOSED(5, "colse"), FAILED(6, "failed");
+            "overdue"), CLOSED(5, "overdue"), FAILED(6, "failed");
 
-    public static String prefix = "verifyCode";
     private int key;
     private String value;
 

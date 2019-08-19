@@ -1,16 +1,19 @@
 package isec.loan.service;
 
-import isec.base.util.S;
-import isec.loan.core.AbstractService;
-import isec.loan.entity.OperLogon;
-import isec.loan.entity.User;
-import isec.loan.mapper.UserMapper;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.HashMap;
-import java.util.Map;
+import isec.base.util.S;
+import isec.loan.core.AbstractService;
+import isec.loan.entity.OperLogon;
+import isec.loan.entity.User;
+import isec.loan.entity.UserAppLog;
+import isec.loan.mapper.UserAppLogMapper;
+import isec.loan.mapper.UserMapper;
 
 
 /**
@@ -24,6 +27,9 @@ public class UserService extends AbstractService<User> {
     UserMapper userMapper;
     @Autowired
     OperLogonService operLogonService;
+    
+    @Autowired
+    UserAppLogMapper userAppLogMapper;
 
     /**
      * 用户登录
@@ -51,4 +57,9 @@ public class UserService extends AbstractService<User> {
         return data;
 
     }
+    
+    public void saveUserAppLog(UserAppLog userAppLog) {
+    	userAppLogMapper.insert(userAppLog);
+    }
+    
 }

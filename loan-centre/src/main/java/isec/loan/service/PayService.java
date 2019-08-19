@@ -1,17 +1,24 @@
 package isec.loan.service;
 
-import com.alibaba.fastjson.JSONObject;
-import isec.base.util.Md5;
-import isec.base.util.http.HttpClientManager;
-import isec.loan.core.AbstractService;
-import isec.loan.entity.PayFlow;
+import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.util.HashMap;
-import java.util.Map;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+
+import isec.base.util.Md5;
+import isec.base.util.S;
+import isec.base.util.http.HttpClientManager;
+import isec.loan.configurer.Config;
+import isec.loan.core.AbstractService;
+import isec.loan.entity.PayFlow;
 
 /**
  * @author Administrator
@@ -27,6 +34,9 @@ public class PayService extends AbstractService<PayFlow> {
     private String merName;
     @Value("${transfer.url}")
     private String url;
+    
+    @Autowired
+    Config config;
 
     /**
      * 交易成功返回模板：
@@ -79,6 +89,7 @@ public class PayService extends AbstractService<PayFlow> {
             logger.info("出款返回参数：{}", response);
 
             //封装返回参数
+            result.put("bill_no",JSONObject.parseObject(response).getString("bill_no"));
             result.put("req", JSONObject.parse(params));
             result.put("callback", JSONObject.parse(response));
             result.put("code", "ok");
@@ -95,5 +106,72 @@ public class PayService extends AbstractService<PayFlow> {
 
     }
 
+
+    /**
+     * 普通支付
+     * 拼装发起支付参数
+     *
+     * @param title
+     * @param payAmount
+     * @param notifySuffix
+     */
+    public Map<String, Object> buildCommonPayParams(String title, BigDecimal payAmount, String notifySuffix) {
+        Map<String, Object> payParams = new HashMap<>();
+        payParams.put("app_id", config.getAppId());
+        payParams.put("app_sign", config.getAppSign());
+        payParams.put("bill_no", "P" + S.createReqNo());
+        payParams.put("title", title);
+        payParams.put("total_fee", payAmount);
+        payParams.put("notify_url", config.getNofify_url() + notifySuffix);
+        return payParams;
+    }
+    
+    
+    /**
+     * { "app_url": null, "code_url":
+     * "https://qr.alipay.com/bax07163nxvhz8nunab9807e?t=1542792356611",
+     * "err_detail": "OK", "id": "92064334-d2e2-466a-b7c6-17c3ecd6217c",
+     * "result_code": 0 }
+     */
+    public Map<String, Object> csPay(String csUrl, Map<String, Object> params) {
+        Map<String, Object> result = new HashMap<>();
+        long timestamp = System.currentTimeMillis();
+        String appId = String.valueOf(params.get("app_id"));
+        String appSign = String.valueOf(params.get("app_sign"));
+        String billNo = String.valueOf(params.get("bill_no"));
+        String realIp = String.valueOf(params.get("real_ip"));
+        String title = String.valueOf(params.get("title"));
+        String totalFee = String.valueOf(params.get("total_fee"));
+        String notifyUrl = String.valueOf(params.get("notify_url"));
+        Map<String, Object> createOrderParam = new HashMap<>();
+        // CS_WX_WAP 微信
+        createOrderParam.put("channel", "CS_ALI_WAP");
+        createOrderParam.put("app_id", appId);
+        logger.info("appId:{} timestamp:{} appSign:{}", appId, timestamp, appSign);
+        String str = appId + timestamp + appSign;
+        logger.info("本地加密前：" + str);
+        String md5 = Md5.md5(str);
+        logger.info("本地加密后:" + md5);
+        createOrderParam.put("app_sign", md5);
+        createOrderParam.put("bill_timeout", 3000);
+        createOrderParam.put("bill_no", billNo);
+        createOrderParam.put("title", title);
+        createOrderParam.put("real_ip", "39.108.90.207");
+        createOrderParam.put("total_fee",
+                new BigDecimal(totalFee).multiply(new BigDecimal(100)).setScale(0, BigDecimal.ROUND_DOWN));
+        createOrderParam.put("timestamp", timestamp);
+        createOrderParam.put("expressType", "0");
+        createOrderParam.put("userId", "123");
+        createOrderParam.put("expressPcOrMobile", "mobile");
+        createOrderParam.put("return_url", config.getReturn_url());
+        createOrderParam.put("notify_url", notifyUrl);
+        String createOrderParams = JSONObject.toJSONString(createOrderParam);
+        logger.info("发起支付参数：" + JSONObject.toJSONString(createOrderParam));
+        String returnMsg = HttpClientManager.getClient().httpPost(csUrl, createOrderParams);
+        logger.info("cs支付接口返回：" + returnMsg);
+        result.put("req_params", JSON.toJSON(createOrderParam));
+        result.put("resp_params", JSON.toJSON(returnMsg));
+        return result;
+    }
 
 }

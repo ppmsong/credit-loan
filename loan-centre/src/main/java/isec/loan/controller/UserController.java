@@ -2,6 +2,8 @@ package isec.loan.controller;
 
 import java.util.Map;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.hibernate.validator.constraints.Length;
 import org.hibernate.validator.constraints.NotBlank;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +11,8 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.alibaba.fastjson.JSONObject;
 
 import isec.base.util.Md5;
 import isec.base.util.S;
@@ -18,9 +22,11 @@ import isec.loan.core.PromptException;
 import isec.loan.core.StatusCodeEnum;
 import isec.loan.entity.Risk;
 import isec.loan.entity.User;
+import isec.loan.entity.UserAppLog;
 import isec.loan.entity.UserInfo;
 import isec.loan.entity.enums.SmsCodeType;
 import isec.loan.entity.enums.VerifyStatus;
+import isec.loan.service.RemoteService;
 import isec.loan.service.RiskService;
 import isec.loan.service.SmsCodeService;
 import isec.loan.service.UserInfoService;
@@ -45,6 +51,9 @@ public class UserController {
     
     @Autowired
     RiskService riskService;
+    
+    @Autowired
+    RemoteService remoteService;
 
     /**
      * 短信验证码登录
@@ -175,8 +184,21 @@ public class UserController {
         userInfo.setBankName(bankName);
         userInfo.setBankCardno(bankCardno);
         userInfo.setBankMobile(bankMobile);
-        userInfo.setBankVerify(VerifyStatus.YES.getKey());
-
+       
+        //四要素认证
+        JSONObject postData = new JSONObject();
+        postData.put("name", userInfo.getName());
+        postData.put("idcard", userInfo.getIdcard());
+        postData.put("bankcard", bankCardno);
+        postData.put("mobile", bankMobile);
+        JSONObject retJson = remoteService.callDx(remoteService.DX_BASE_URL + remoteService.DX_BANK_CARD_FOUR_VERIFY_URL, postData);
+        String validateCode = retJson.getJSONObject("data").getString("validateCode");
+        if ("1".equals(validateCode)) {
+        	 userInfo.setBankVerify(VerifyStatus.YES.getKey());
+        } else {
+        	 userInfo.setBankVerify(VerifyStatus.FAIL.getKey());
+        }
+        
         int affectRows = 0;
         if (userInfoService.findById(user.getUserId()) == null) {
             affectRows = userInfoService.save(userInfo);
@@ -199,7 +221,47 @@ public class UserController {
 		risk.setApiKey(RiskService.PHONE_BOOK_API_KEY);
 		risk.setMobile(user.getMobile());
 		risk.setResponse(phoneBook);
-		riskService.saveOrUpdateRiskOnUserId(risk);
+		risk.setStatus("success");
+		riskService.saveOrUpdateRisk(risk);
 	}
+	
+	
+	@RequestMapping("/saveUserAppLog")
+	public void saveUserAppLog(@In User user,HttpServletRequest request, UserAppLog userAppLog) {
+		userAppLog.setUserId(user.getUserId());
+		userAppLog.setIpAddress(getCliectIp(request));
+		userAppLog.setCreateTime(S.getCurrentTimestamp());
+		userService.saveUserAppLog(userAppLog);
+	}
+	
+	
+	/**
+     * 获取客户端ip地址
+     * @param request
+     * @return
+     */
+    public static String getCliectIp(HttpServletRequest request)
+    {
+        String ip = request.getHeader("x-forwarded-for");
+        if (ip == null || ip.trim() == "" || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("Proxy-Client-IP");
+        }
+        if (ip == null || ip.trim() == "" || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("WL-Proxy-Client-IP");
+        }
+        if (ip == null || ip.trim() == "" || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getRemoteAddr();
+        }
 
+        // 多个路由时，取第一个非unknown的ip
+        final String[] arr = ip.split(",");
+        for (final String str : arr) {
+            if (!"unknown".equalsIgnoreCase(str)) {
+                ip = str;
+                break;
+            }
+        }
+        return ip;
+    }
+ 
 }

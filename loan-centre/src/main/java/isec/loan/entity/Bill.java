@@ -1,6 +1,7 @@
 package isec.loan.entity;
 
 import isec.base.util.S;
+import isec.loan.entity.enums.IsDelete;
 
 import javax.persistence.Id;
 
@@ -26,7 +27,7 @@ public class Bill {
     }
 
     public Bill(String userId, String loanId, int repaymentAmount, int rBasic, int rInterest, long deadline) {
-        this.billId = S.createReqNo();
+        this.billId = "B"+S.createReqNo();
         this.userId = userId;
         this.loanId = loanId;
         this.repaymentAmount = repaymentAmount;
@@ -38,7 +39,7 @@ public class Bill {
         this.overdueFine = 0;
         this.createTime = S.getCurrentTimestamp();
         this.updateTime = 0;
-        this.isDelete = 1;
+        this.isDelete = IsDelete.NO.getKey();
     }
 
     public String getBillId() {

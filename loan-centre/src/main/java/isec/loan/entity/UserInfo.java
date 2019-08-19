@@ -2,6 +2,7 @@ package isec.loan.entity;
 
 
 import isec.base.util.S;
+import isec.loan.entity.enums.IsDelete;
 
 import javax.persistence.Id;
 
@@ -12,6 +13,7 @@ public class UserInfo {
     private String name;
     private String idcard;
     private String alipayAccount;
+    private String alipayNickName;
     private int zhimaScore;
     private String bankName;
     private String bankCardno;
@@ -22,9 +24,11 @@ public class UserInfo {
     private int contactVerify;
     private int bankVerify;
     private int operatorVerify;
+    private int alipayVerify;
     private long createTime;
     private long updateTime;
     private int isDelete;
+
 
     public UserInfo() {
         super();
@@ -35,6 +39,7 @@ public class UserInfo {
         this.name = "";
         this.idcard = "";
         this.alipayAccount = "";
+        this.alipayNickName = "";
         this.zhimaScore = 0;
         this.bankName = "";
         this.bankCardno = "";
@@ -45,9 +50,26 @@ public class UserInfo {
         this.contactVerify = 0;
         this.bankVerify = 0;
         this.operatorVerify = 0;
+        this.alipayVerify = 0;
         this.createTime = S.getCurrentTimestamp();
         this.updateTime = 0;
-        this.isDelete = 1;
+        this.isDelete = IsDelete.NO.getKey();
+    }
+
+    public String getAlipayNickName() {
+        return alipayNickName;
+    }
+
+    public void setAlipayNickName(String alipayNickName) {
+        this.alipayNickName = alipayNickName;
+    }
+
+    public int getAlipayVerify() {
+        return alipayVerify;
+    }
+
+    public void setAlipayVerify(int alipayVerify) {
+        this.alipayVerify = alipayVerify;
     }
 
     public String getUserId() {
@@ -124,13 +146,6 @@ public class UserInfo {
 
     public int getIdcardVerify() {
         return idcardVerify;
-    }
-
-    public int getRealIdcardVerify(UserInfo userInfo) {
-        if (!S.isBlank(userInfo.getAlipayAccount()) && 1 == userInfo.getIdcardVerify()) {
-            return 1;
-        }
-        return 0;
     }
 
     public void setIdcardVerify(int idcardVerify) {

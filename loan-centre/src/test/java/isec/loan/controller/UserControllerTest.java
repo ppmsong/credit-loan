@@ -22,6 +22,7 @@ import org.springframework.util.MultiValueMap;
 
 import com.alibaba.fastjson.JSON;
 
+import isec.base.util.Md5;
 import isec.base.util.S;
 import isec.loan.entity.Contacter;
 import isec.loan.entity.UserInfo;
@@ -41,7 +42,7 @@ public class UserControllerTest extends BasicTest {
 
 	@Before
 	public void setupMockMvc() throws Exception {
-		super.loginBySmsCode("15172538022");
+		super.loginBySmsCode("18888888888");
 	}
 
 	@Test
@@ -160,5 +161,28 @@ public class UserControllerTest extends BasicTest {
 
 	}
 	
+	
+	@Test
+	public void saveUserAppLog() throws Exception {
+
+		MultiValueMap<String, String> paramValues = new LinkedMultiValueMap<>();
+		paramValues.add("token", token);
+
+		paramValues.add("deviceName", "deviceName");
+ 		paramValues.add("mac", "mac");
+		paramValues.add("iemi", "iemi");
+		paramValues.add("location", "location");
+
+		mockMvc.perform(MockMvcRequestBuilders.post("/user/saveUserAppLog").params(paramValues)
+				.accept(MediaType.APPLICATION_JSON)).andExpect(content().contentType("application/json;charset=UTF-8"))
+				.andExpect(MockMvcResultMatchers.status().isOk())
+				// 断言
+				.andExpect(jsonPath("$.code").value("ok")).andDo(MockMvcResultHandlers.print()).andReturn();
+
+	}
+	
+	public static void main(String[] args) {
+		System.out.println("密码=="+Md5.md5("1" + "12ba"));
+	}
 
 }

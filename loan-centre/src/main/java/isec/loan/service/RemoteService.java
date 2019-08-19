@@ -54,6 +54,9 @@ public class RemoteService {
 	
 	public String DX_TAOBAO_ANAY_REPORT_URL="taobaoAnayReport";
 	
+	public String DX_BANK_CARD_FOUR_VERIFY_URL="bankcardFourVerify";
+	
+	
 	public JSONObject callDx(String url, JSONObject postData) {
 		logger.info("callDx begin url=" + url + " postData=" + postData.toJSONString());
 		String timestamp = "" + System.currentTimeMillis() / 1000;

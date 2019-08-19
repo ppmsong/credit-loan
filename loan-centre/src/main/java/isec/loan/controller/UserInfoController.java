@@ -56,11 +56,12 @@ public class UserInfoController {
         data.put("bankCardno", userInfo.getBankCardno());
         data.put("bankMobile", userInfo.getBankMobile());
         data.put("contacter", userInfo.getContacter());
-        data.put("idcardVerify", userInfo.getRealIdcardVerify(userInfo));
+        data.put("idcardVerify", userInfo.getIdcardVerify());
         data.put("zhimaVerify", userInfo.getZhimaVerify());
         data.put("contactVerify", userInfo.getContactVerify());
         data.put("bankVerify", userInfo.getBankVerify());
         data.put("operatorVerify", userInfo.getOperatorVerify());
+        data.put("alipayVerify", userInfo.getAlipayVerify());
 
         return data;
 

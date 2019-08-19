@@ -3,6 +3,7 @@ package isec.loan.service;
 import com.github.pagehelper.PageHelper;
 import isec.loan.core.AbstractService;
 import isec.loan.entity.Message;
+import isec.loan.entity.enums.IsDelete;
 import isec.loan.mapper.MessageMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -83,7 +84,7 @@ public class MessageService extends AbstractService<Message> {
      */
     public int getMessageCount(String userId) {
         Condition condition = new Condition(Message.class);
-        condition.createCriteria().andCondition("user_id = '" + userId + "' and is_delete = 0 and status = 0 ");
+        condition.createCriteria().andCondition("user_id = '" + userId + "' and is_delete = "+IsDelete.NO.getKey() +" and status = 0 ");
         return mapper.selectCountByCondition(condition);
     }
 }
