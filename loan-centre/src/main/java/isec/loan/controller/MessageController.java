@@ -22,7 +22,7 @@ import java.util.Map;
  * @date 2019/07/17
  */
 @RestController
-@RequestMapping("/user")
+@RequestMapping("/message")
 public class MessageController {
 
     @Autowired

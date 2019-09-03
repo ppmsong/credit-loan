@@ -53,5 +53,35 @@ public class CommonControllerTest extends BasicTest {
 				// 断言
 				.andExpect(jsonPath("$.code").value("ok")).andExpect(jsonPath("$.data").isNotEmpty())
 				.andDo(MockMvcResultHandlers.print()).andReturn();
-	}    
+	}
+
+    @Test
+    public void getLastVersion() throws Exception {
+
+        MultiValueMap<String, String> paramValues = new LinkedMultiValueMap<>();
+        paramValues.add("type", "1");
+
+        mockMvc.perform(MockMvcRequestBuilders.post("/common/getLastVersion").params(paramValues).accept(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType("application/json;charset=UTF-8"))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                // 断言
+                .andExpect(jsonPath("$.code").value("ok")).andExpect(jsonPath("$.data").isNotEmpty())
+                .andDo(MockMvcResultHandlers.print()).andReturn();
+
+    }
+
+    @Test
+    public void sendTg() throws Exception {
+
+        MultiValueMap<String, String> paramValues = new LinkedMultiValueMap<>();
+        paramValues.add("tgType", "1");
+        paramValues.add("mark", "1111");
+
+        mockMvc.perform(MockMvcRequestBuilders.post("/common/sendTg").params(paramValues).accept(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType("application/json;charset=UTF-8"))
+                .andExpect(MockMvcResultMatchers.status().isOk())
+                // 断言
+                .andExpect(jsonPath("$.code").value("ok"))
+                .andDo(MockMvcResultHandlers.print()).andReturn();
+    }
 }

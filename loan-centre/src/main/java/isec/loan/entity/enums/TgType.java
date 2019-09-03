@@ -1,14 +1,14 @@
 package isec.loan.entity.enums;
 
 /**
- * 账单状态
+ * tg验证码状态
  *
  * @author p
- * @date 2019-07-23
+ * @date 2019-08-26
  */
-public enum BillStatus {
-    //还款状态 0 未还款 1 已还款  2 提前还款  4 逾期 5 分期还款
-    UNREPAY(0, "unrepay"), REPAY(1, "repay"),  OVERDUED(4, "overdued"),STAGE(5, "stage");
+public enum TgType {
+    //1-部分还款验证码  2-出款预警  3-支付预警 4-申请借款预警  5-请订单累计达到10的倍数时预警
+    PART_REPAY(1, "part_repay"), OUT_MONEY(2, "out_money"), REPAY(3, "repay"),APPLY_LOAN(4, "apply_loan"),APPLY_LOAN_2(5, "apply_loan_2");
 
     private int key;
     private String value;
@@ -33,7 +33,7 @@ public enum BillStatus {
         this.value = value;
     }
 
-    BillStatus(Integer key, String value) {
+    TgType(Integer key, String value) {
         this.key = key;
         this.value = value;
     }

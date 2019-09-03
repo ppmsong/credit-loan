@@ -1,13 +1,15 @@
 package isec.loan.service;
 
-import isec.base.util.S;
-import isec.loan.entity.Bill;
-import isec.loan.entity.Loan;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
+import isec.base.util.S;
+import isec.loan.entity.Bill;
+import isec.loan.entity.Loan;
+import isec.loan.mapper.PayFlowMapper;
 
 @Service
 public class MoneyCalculateService {
@@ -17,6 +19,8 @@ public class MoneyCalculateService {
     LoanService loanService;
     @Autowired
     BillService billService;
+    @Autowired
+    PayFlowMapper payFlowMapper;
 
     /**
      * 借款实际到账金额
@@ -110,7 +114,7 @@ public class MoneyCalculateService {
      * @return
      */
     public BigDecimal getDayOverdueMoney(BigDecimal overdueRate, int borrowMoney) {
-        return new BigDecimal(borrowMoney).divide(new BigDecimal(100), 2, RoundingMode.DOWN).multiply(overdueRate.divide(new BigDecimal(100), 2, RoundingMode.DOWN));
+        return new BigDecimal(borrowMoney).divide(new BigDecimal(100), 2, RoundingMode.DOWN).multiply(overdueRate.divide(new BigDecimal(100), 2, RoundingMode.DOWN)).setScale(2,RoundingMode.DOWN);
     }
 
     /**
@@ -194,6 +198,18 @@ public class MoneyCalculateService {
     public BigDecimal fenToYuan(int fen) {
         return new BigDecimal(fen).divide(new BigDecimal(100), 2, RoundingMode.DOWN);
     }
+ 
+    //已还金额
+    public int getRePayMoney(String billId) {
+    	return payFlowMapper.selectRePayMoney(billId);
+    }
+    
+    //剩余应还金额
+	public int getNeedMoney(String billId) {
+		return getBillRepayMoney(billId).multiply(new BigDecimal(100)).intValue()
+				- payFlowMapper.selectRePayMoney(billId);
+	}
+   
 
 
 }

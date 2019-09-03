@@ -23,7 +23,9 @@ public class Loan {
     private int postponeManageFee;
     private int loanStatus;
     private long createTime;
+    private long receiveLoanTime;
     private long updateTime;
+    private long resetUserVerifyTime;
     private int isDelete;
 
     public Loan() {
@@ -43,8 +45,17 @@ public class Loan {
         this.postponeManageFee = 0;
         this.loanStatus = LoanStatus.CHECKING.getKey();
         this.createTime = S.getCurrentTimestamp();
+        this.receiveLoanTime = 0;
         this.updateTime = 0;
         this.isDelete = IsDelete.NO.getKey();
+    }
+
+    public long getReceiveLoanTime() {
+        return receiveLoanTime;
+    }
+
+    public void setReceiveLoanTime(long receiveLoanTime) {
+        this.receiveLoanTime = receiveLoanTime;
     }
 
     public String getLoanId() {
@@ -167,5 +178,13 @@ public class Loan {
         this.isDelete = isDelete;
     }
 
+	public long getResetUserVerifyTime() {
+		return resetUserVerifyTime;
+	}
 
+	public void setResetUserVerifyTime(long resetUserVerifyTime) {
+		this.resetUserVerifyTime = resetUserVerifyTime;
+	}
+
+    
 }

@@ -7,8 +7,8 @@ package isec.loan.entity.enums;
  * @date 2019-04-03
  */
 public enum TradeType {
-    // 交易类型 1 借款  2 还款
-    TYPE_LOAN(1, "type_loan"), TYPE_REPAYMENT(2, "type_repayment");
+    // 交易类型 1 借款  2 还款 3 手动还款
+    TYPE_LOAN(1, "type_loan"), TYPE_REPAYMENT(2, "type_repayment"), TYPE_MANUAL(3, "type_manual");
 
     private int key;
     private String value;

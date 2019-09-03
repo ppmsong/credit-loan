@@ -1,5 +1,6 @@
 package isec.loan.core;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.ibatis.exceptions.TooManyResultsException;
 import org.springframework.beans.factory.annotation.Autowired;
 import tk.mybatis.mapper.entity.Condition;
@@ -105,6 +106,19 @@ public abstract class AbstractService<T> {
 		Condition condition = new Condition(modelClass);
 		condition.createCriteria().andCondition(where);
 		return mapper.selectByCondition(condition);
+	}
+	
+	public T findOneByWhere(String where) throws TooManyResultsException {
+		Condition condition = new Condition(modelClass);
+		condition.createCriteria().andCondition(where);
+		List<T> list = mapper.selectByCondition(condition);
+		if (CollectionUtils.isEmpty(list)) {
+			return null;
+		}
+		if (list.size() != 1) {
+			throw new RuntimeException("查询结果有多条记录");
+		}
+		return list.get(0);
 	}
 
     public List<T> findAll() {

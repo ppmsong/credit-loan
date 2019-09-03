@@ -3,14 +3,15 @@ package isec.loan.controller;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import isec.base.bean.MapBox;
-import isec.base.util.MD5Util;
 import isec.base.util.Md5;
 import isec.base.util.S;
-import isec.base.util.Tool;
 import isec.loan.common.In;
 import isec.loan.configurer.Config;
 import isec.loan.core.PromptException;
-import isec.loan.entity.*;
+import isec.loan.entity.Bill;
+import isec.loan.entity.Loan;
+import isec.loan.entity.PayFlow;
+import isec.loan.entity.User;
 import isec.loan.entity.enums.*;
 import isec.loan.service.*;
 import org.slf4j.Logger;
@@ -22,8 +23,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.servlet.ServletInputStream;
-import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
@@ -74,22 +73,35 @@ public class BillController {
     @Autowired
     OdinService odinService;
 
+    @Autowired
+    TelegramService telegramService;
+
     private Logger logger = LoggerFactory.getLogger(BillController.class);
 
+
     /**
-     * 贷款审核成功->生成账单
+     * 领取借款
      *
-     * @param loanId
-     * @return
+     * @param loanId 贷款记录编号
      */
-    @PostMapping(value = "createBill")
-    public void createBill(@NotBlank(message = "请传入贷款编号loanId") String loanId, @NotBlank(message = "请传入操作员operatorId") String operatorId) {
-
-        boolean succ = billService.createBill(loanId, operatorId);
-        if (!succ) {
-            throw new PromptException("放款出现异常，请检查");
+    @PostMapping(value = "receiveLoan")
+    public void receiveLoan(@In User user, @NotBlank(message = "请传入贷款编号loanId") String loanId) {
+        boolean result = billService.createBill(loanId, "");
+        if (!result) {
+            throw new PromptException("领取借款失败，请稍后再试");
         }
+    }
 
+
+    /**
+     * 重新借款
+     */
+    @PostMapping(value = "againLoan")
+    public void againLoan(@NotBlank(message = "请传入贷款编号loanId") String loanId,
+                          @NotBlank(message = "operatorId不能为空") String operatorId) {
+        JSONObject remark = new JSONObject();
+        remark.put("operatorId", operatorId);
+        billService.createBill(loanId, remark.toJSONString());
     }
 
 
@@ -115,12 +127,11 @@ public class BillController {
     /**
      * 账单详情
      *
-     * @param user
      * @param billId
      * @return
      */
     @PostMapping(value = "billDetail")
-    public JSONObject billDetail(@In User user, String billId) {
+    public JSONObject billDetail(String billId) {
 
         Bill bill = billService.findById(billId);
         if (null == bill) {
@@ -142,7 +153,7 @@ public class BillController {
         result.put("overDueDays", moneyCalculateService.overdueDays(overdueSeconds));
         BigDecimal overDue = moneyCalculateService.getTotalOverdueMoney(loan.getOverdueRate(), bill.getrBasic(), overdueSeconds);
         //应还金额
-        result.put("repayment_amount", moneyCalculateService.getBillRepayMoney(billId));
+        result.put("repayment_amount", moneyCalculateService.fenToYuan(moneyCalculateService.getNeedMoney(billId)));
         //滞纳金每天
         result.put("dayOverdue", moneyCalculateService.getDayOverdueMoney(loan.getOverdueRate(), bill.getrBasic()));
         result.put("allOverdue", overDue);
@@ -220,126 +231,13 @@ public class BillController {
 
 
     /**
-     * 还款异步回调
+     * 用户发起还款支付接口
      *
-     * @param req
+     * @param user
+     * @param billId
+     * @param amount
      * @return
-     * @throws Exception
      */
-    @RequestMapping("/replaymentNotily")
-    public synchronized String replaymentNotily(HttpServletRequest req) throws Exception {
-        logger.info("==========================异步回调开始=====================");
-        ServletInputStream in = req.getInputStream();
-        String params = Tool.convertInputStream2String(in);
-        logger.info("还款异步回调信息：" + params);
-        JSONObject notify = JSONObject.parseObject(params);
-        if (null == notify) {
-            logger.error("回调参数为空，直接返回");
-            return "回调参数为空";
-        }
-        Map<String, Object> messageDetail = (Map<String, Object>) notify.get("message_detail");
-        // cs订单号
-        String outTradeNo = "";
-        if (null != messageDetail) {
-            outTradeNo = String.valueOf(messageDetail.get("cs_merbill_id"));
-        }
-        // 商户订单号
-        String transactionId = String.valueOf(notify.get("transaction_id"));
-        String transactionType = String.valueOf(notify.get("transaction_type"));
-        String tradeSuccess = String.valueOf(notify.get("trade_success"));
-        String channelType = String.valueOf(notify.get("channel_type"));
-        String transactionFee = String.valueOf(notify.get("transaction_fee"));
-        // 签名
-        String signature = String.valueOf(notify.get("signature"));
-        logger.info("签名signature：" + signature);
-        // 验证签名
-        String toSign = config.getAppId() + transactionId + transactionType + channelType + transactionFee
-                + config.getMasterSecret();
-        logger.info("签名前：" + toSign);
-        String mySign = MD5Util.getMD5(toSign, "UTF-8");
-        logger.info("签名后：" + mySign);
-        if (!mySign.equals(signature)) {
-            logger.error("还款回调签名错误");
-            return "签名错误";
-        }
-
-        /**
-         *
-         * 1.更新payFlow表状态
-         * 2.更新bill表状态
-         * 3.更新贷款订单loan表状态
-         *
-         */
-        PayFlow payFlow = payService.findById(transactionId);
-        if (null == payFlow) {
-            logger.error("不存在的订单号：{}", transactionId);
-            return "不存在的订单号：" + transactionId;
-        }
-        if (TradeStatus.STATUS_WAITTING.getKey() != payFlow.getStatus()) {
-            logger.warn("订单{}已处理，请不要重复操作", transactionId);
-            return "订单" + transactionId + "已处理，请不要重复操作";
-        }
-        payFlow.setStatus(TradeStatus.TRADE_SUCCESS.getKey());
-        payFlow.setOutTradeNo(outTradeNo);
-        payFlow.setNotify(notify.toJSONString());
-        payFlow.setUpdateTime(S.getCurrentTimestamp());
-        payService.update(payFlow);
-
-
-        Bill bill = billService.findById(payFlow.getTradeNo());
-        if (null == bill) {
-            logger.warn("未找到账单记录：{}", transactionId);
-            return "未找到账单记录：" + transactionId;
-        }
-        //非未还款、展期状态
-        if (BillStatus.UNREPAY.getKey() != bill.getStatus()) {
-            logger.warn("账单已经处理过，请不要重复操作：{}", transactionId);
-            return "账单已经处理过，请不要重复操作:" + transactionId;
-        }
-        //判断是否是提前还款
-        bill.setStatus(BillStatus.REPAY.getKey());
-        bill.setRepayTime(S.getCurrentTimestamp());
-        bill.setUpdateTime(S.getCurrentTimestamp());
-        if (S.getCurrentTimestamp() < bill.getDeadline()) {
-            bill.setStatus(BillStatus.AHEAD.getKey());
-        }
-        billService.update(bill);
-
-        //更新贷款订单状态
-        Loan loan = loanService.findById(bill.getLoanId());
-        if (null != loan) {
-            loan.setLoanStatus(LoanStatus.CLOSED.getKey());
-            loan.setUpdateTime(S.getCurrentTimestamp());
-            loanService.update(loan);
-        }
-
-        //创建还款操作记录
-        ActionRecord actionRecord = new ActionRecord(bill.getBillId(), 2, bill.getUserId(), 2, "", bill.getStatus());
-        actionRecordService.save(actionRecord);
-
-        //修改用户认证状态
-        UserInfo userInfo = userInfoService.findById(bill.getUserId());
-        if (null != userInfo) {
-            userInfo.setZhimaVerify(0);
-            userInfo.setOperatorVerify(0);
-            userInfo.setBankVerify(0);
-            userInfo.setContactVerify(0);
-            userInfo.setUpdateTime(S.getCurrentTimestamp());
-            userInfoService.update(userInfo);
-        }
-
-        String content = "尊敬的客户，您申请的借款 " + loan.getLoanId() + " 已与 " + S.getCurDate() + " 还款 " + moneyCalculateService.fenToYuan(Integer.valueOf(transactionFee)) + " 元，其中账单累计应还金额 " + moneyCalculateService.fenToYuan(Integer.valueOf(transactionFee)) + " 元，本期借款账单已还请，感谢您的使用。";
-        //站内消息
-        messageService.sendMessage(bill.getUserId(), "您的账单已还清，感谢使用", content);
-
-        //推送
-        odinService.sendCommonPush(bill.getUserId(), content, OdinPushType.REPAYED_ALL.getStrkey(), new HashMap<>());
-
-        logger.info("==========================异步回调结束=====================");
-        return "success";
-    }
-
-
     @PostMapping(value = "rePay")
     public Map<String, Object> rePay(@In User user, @NotBlank(message = "billId不能为空") String billId,
                                      @NotNull(message = "amount不能为空") BigDecimal amount) {
@@ -353,18 +251,26 @@ public class BillController {
         }
 
         // 支付请求参数
-        Map<String, Object> payParams = payService.buildCommonPayParams("有借用户还款", amount, "bill/replaymentNotily");
+        Map<String, Object> payParams = payService.buildCommonPayParams("有借支付宝还款", amount, "pay/replaymentNotily");
         String payId = payParams.get("bill_no").toString();
         // 调支付
         Map<String, Object> returnMsg = payService.csPay(config.getComsunnyBillApi(), payParams);
+        if (null == returnMsg) {
+            telegramService.sendTgMsg3(TgType.REPAY.getKey(), user.getUserId(), payId);
+        }
         // 支付返回
         JSONObject returnJson = JSON.parseObject(String.valueOf(returnMsg.get("resp_params")));
         // 创建支付流水
         PayFlow payFlow = new PayFlow(billId, TradeType.TYPE_REPAYMENT.getKey(), user.getUserId(), user.getMobile(),
-                "有借用户还款", amount.multiply(new BigDecimal(100)).intValue(), 1,
+                "有借支付宝还款", amount.multiply(new BigDecimal(100)).intValue(), 1,
                 JSON.toJSONString(returnMsg.get("req_params")));
         payFlow.setPayId(payId);
         payService.save(payFlow);
+
+        if (0 != returnJson.getIntValue("result_code")) {
+            telegramService.sendTgMsg3(TgType.REPAY.getKey(), user.getUserId(), payId);
+        }
+
         // 发起支付返回
         Map<String, Object> data = new HashMap<String, Object>();
         data.put("errDetail", returnJson.getString("err_detail"));
@@ -372,6 +278,58 @@ public class BillController {
         data.put("billId", billId);
         data.put("payId", payId);
         return data;
+    }
+
+
+    /**
+     * 后台部分还款
+     *
+     * @param outTradeNo
+     * @param billId
+     * @param amount
+     * @param payType
+     * @param operatorId
+     */
+    @PostMapping(value = "manualRePay")
+    public void manualRePay(@NotBlank(message = "outTradeNo不能为空") String outTradeNo,
+                            @NotBlank(message = "billId不能为空") String billId, @NotNull(message = "amount不能为空") BigDecimal amount,
+                            @NotBlank(message = "payType不能为空") String payType, @NotBlank(message = "operatorId不能为空") String operatorId, @NotBlank(message = "请传入tg验证码tgCode") String tgCode) {
+
+        //校验tg验证码
+        telegramService.verify(billId, tgCode);
+
+        JSONObject remark = new JSONObject();
+        remark.put("operatorId", operatorId);
+
+        PayFlow payFlow = new PayFlow(billId, TradeType.TYPE_MANUAL.getKey(), "", "",
+                "手动还款", amount.multiply(new BigDecimal(100)).intValue(), Integer.valueOf(payType), "");
+        payFlow.setOutTradeNo(outTradeNo);
+        payFlow.setStatus(TradeStatus.TRADE_SUCCESS.getKey());
+        payFlow.setRequestParam(remark.toJSONString());
+        payFlow.setUpdateTime(S.getCurrentTimestamp());
+        String result = payService.repay(payFlow);
+        if (!"success".equals(result)) {
+            throw new PromptException(result);
+        }
+    }
+
+    /**
+     * 订单核对
+     *
+     * @param payId
+     */
+    @PostMapping(value = "checkOrder")
+    public void checkOrder(@NotBlank(message = "支付流水号payId不能为空") String payId) {
+
+        PayFlow payFlow = payService.findById(payId);
+        if (null == payFlow) {
+            throw new PromptException("流水记录payId不存在");
+        }
+        if (payService.checkOrder(payId)) {
+            payFlow.setStatus(2);
+            payFlow.setUpdateTime(S.getCurrentTimestamp());
+            payService.update(payFlow);
+        }
     }
 
 }

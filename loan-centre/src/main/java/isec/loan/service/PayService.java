@@ -1,24 +1,27 @@
 package isec.loan.service;
 
-import java.math.BigDecimal;
-import java.util.HashMap;
-import java.util.Map;
-
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import isec.base.util.Md5;
+import isec.base.util.S;
+import isec.base.util.http.HttpClientManager;
+import isec.loan.configurer.Config;
+import isec.loan.core.AbstractService;
+import isec.loan.entity.*;
+import isec.loan.entity.enums.BillStatus;
+import isec.loan.entity.enums.LoanStatus;
+import isec.loan.entity.enums.OdinPushType;
+import isec.loan.entity.enums.TradeType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
-
-import isec.base.util.Md5;
-import isec.base.util.S;
-import isec.base.util.http.HttpClientManager;
-import isec.loan.configurer.Config;
-import isec.loan.core.AbstractService;
-import isec.loan.entity.PayFlow;
+import java.math.BigDecimal;
+import java.net.URLEncoder;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Administrator
@@ -34,9 +37,34 @@ public class PayService extends AbstractService<PayFlow> {
     private String merName;
     @Value("${transfer.url}")
     private String url;
-    
+    @Value("${config.appId}")
+    private String appId;
+    @Value("${config.appSign}")
+    private String appSign;
+    @Value("${config.comsunny}")
+    private String payUrl;
+
+
     @Autowired
     Config config;
+    @Autowired
+    BillService billService;
+    @Autowired
+    MoneyCalculateService moneyCalculateService;
+    @Autowired
+    LoanService loanService;
+    @Autowired
+    ActionRecordService actionRecordService;
+    @Autowired
+    MessageService messageService;
+    @Autowired
+    OdinService odinService;
+    @Autowired
+    UserInfoService userInfoService;
+    @Autowired
+    UserService userService;
+    @Autowired
+    TelegramService telegramService;
 
     /**
      * 交易成功返回模板：
@@ -89,13 +117,13 @@ public class PayService extends AbstractService<PayFlow> {
             logger.info("出款返回参数：{}", response);
 
             //封装返回参数
-            result.put("bill_no",JSONObject.parseObject(response).getString("bill_no"));
+            result.put("bill_no", JSONObject.parseObject(response).getString("bill_no"));
             result.put("req", JSONObject.parse(params));
             result.put("callback", JSONObject.parse(response));
-            result.put("code", "ok");
 
-            //交易失败
-            if (null == response || (!JSONObject.parseObject(response).getString("result_code").equals("1"))) {
+            if (!S.isBlank(response) && JSONObject.parseObject(response).getString("result_code").equals("1")) {
+                result.put("code", "ok");
+            } else {
                 result.put("code", "fail");
             }
         } catch (Exception e) {
@@ -125,9 +153,10 @@ public class PayService extends AbstractService<PayFlow> {
         payParams.put("notify_url", config.getNofify_url() + notifySuffix);
         return payParams;
     }
-    
-    
+
+
     /**
+     * 发起支付
      * { "app_url": null, "code_url":
      * "https://qr.alipay.com/bax07163nxvhz8nunab9807e?t=1542792356611",
      * "err_detail": "OK", "id": "92064334-d2e2-466a-b7c6-17c3ecd6217c",
@@ -169,9 +198,126 @@ public class PayService extends AbstractService<PayFlow> {
         logger.info("发起支付参数：" + JSONObject.toJSONString(createOrderParam));
         String returnMsg = HttpClientManager.getClient().httpPost(csUrl, createOrderParams);
         logger.info("cs支付接口返回：" + returnMsg);
+
         result.put("req_params", JSON.toJSON(createOrderParam));
         result.put("resp_params", JSON.toJSON(returnMsg));
         return result;
     }
+
+    /**
+     * 订单核对
+     *
+     * @param billNo 要核对的订单号
+     * @return
+     */
+    public boolean checkOrder(String billNo) {
+
+        JSONObject param = new JSONObject();
+        String url = payUrl + "/2/rest/bills";
+        long timestamp = System.currentTimeMillis();
+        param.put("app_id", appId);
+        param.put("timestamp", timestamp);
+        param.put("app_sign", Md5.getCsMD5(appId + timestamp + appSign, "UTF-8"));
+        param.put("bill_no", billNo);
+        param.put("spay_result", true);
+        logger.info("订单{}核对发起参数：{},地址：{}", billNo, JSON.toJSONString(param), url);
+        url = url + "?para=" + URLEncoder.encode(JSON.toJSONString(param));
+        String result = HttpClientManager.getClient().httpsGet(url);
+        logger.info("订单{}核对返回参数：{}", billNo, result);
+        //调用成功
+        if (!S.isBlank(result) && 0 == JSONObject.parseObject(result).getIntValue("result_code")) {
+            JSONObject json = JSONObject.parseObject(result).getJSONArray("bills").getJSONObject(0);
+            if (json.getBoolean("spay_result")) {
+                return true;
+            }
+
+        }
+        return false;
+    }
+
+    public String repay(PayFlow payFlow) {
+        logger.info("还款 payFlow=>" + JSONObject.toJSONString(payFlow));
+
+        String billId = payFlow.getTradeNo();
+        Bill bill = billService.findById(billId);
+        if (null == bill) {
+            logger.error("未找到账单记录：{}", billId);
+            return "未找到账单记录：" + billId;
+        }
+
+        if (BillStatus.REPAY.getKey() == bill.getStatus()) {
+            logger.warn("账单已还清");
+            return "success";
+        }
+
+        int actionType = 0;
+        // 手动还款
+        if (TradeType.TYPE_MANUAL.getKey() == payFlow.getTradeType()) {
+            logger.info("手动还款");
+            User user = userService.findById(bill.getUserId());
+            payFlow.setUserId(user.getUserId());
+            payFlow.setMobile(user.getMobile());
+            save(payFlow);
+            actionType = 4;
+
+        } else {// 支付宝付款
+            logger.info("有借支付宝还款");
+            update(payFlow);
+            actionType = 2;
+        }
+
+        int needMoney = moneyCalculateService.getNeedMoney(bill.getBillId());
+        logger.info("needMoney=" + needMoney);
+        // 更新账单 订单状态 重置用户状态
+        Loan loan = loanService.findById(bill.getLoanId());
+        loan.setUpdateTime(S.getCurrentTimestamp());
+        bill.setRepayTime(S.getCurrentTimestamp());
+        bill.setUpdateTime(S.getCurrentTimestamp());
+        if (needMoney <= 0) {
+            logger.info("欠款已还清");
+            bill.setStatus(BillStatus.REPAY.getKey());
+            loan.setLoanStatus(LoanStatus.FINISHED.getKey());
+            userInfoService.resetUserInfo(bill.getUserId());
+        } else {
+            logger.info("欠款未还清");
+            bill.setStatus(BillStatus.STAGE.getKey());
+        }
+        billService.update(bill);
+        loanService.update(loan);
+
+        // 创建还款操作记录
+        ActionRecord actionRecord = new ActionRecord(bill.getBillId(), 2, bill.getUserId(), actionType, "",
+                bill.getStatus());
+        actionRecordService.save(actionRecord);
+
+        // 推送消息
+        String title = "您的账单已还清，感谢使用";
+        String content = "尊敬的客户，您申请的借款 " + loan.getLoanId() + " 已与 " + S.getCurDate() + " 还款 "
+                + moneyCalculateService.fenToYuan(payFlow.getTotalAmount()) + " 元，其中账单累计应还金额 "
+                + moneyCalculateService.fenToYuan(payFlow.getTotalAmount()) + " 元，本期借款账单已还请，感谢您的使用。";
+        String odinPushType = OdinPushType.REPAYED_ALL.getStrkey();
+
+        if (needMoney > 0) {
+            title = "已成功还款" + moneyCalculateService.fenToYuan(payFlow.getTotalAmount()) + "元";
+            content = "尊敬的客户，您申请的借款 " + loan.getLoanId() + " 已与 " + S.getCurDate() + " 还款 " + moneyCalculateService.fenToYuan(payFlow.getTotalAmount()) + " 元，其中账单累计应还金额 " + moneyCalculateService.getBillRepayMoney(payFlow.getTradeNo()) + " 元，还剩 " + moneyCalculateService.fenToYuan(moneyCalculateService.getNeedMoney(payFlow.getTradeNo())) + " 元未还。为维护您良好的借款信用记录并避免造成更多损失，请务必尽早还款。感谢您的使用。";
+            odinPushType = OdinPushType.REPAYED_PART.getStrkey();
+        }
+
+        logger.info("还款成功开始推送消息");
+        try {
+
+            // 站内消息
+            messageService.sendMessage(bill.getUserId(), title, content);
+            // 推送
+            odinService.sendCommonPush(bill.getUserId(), content, odinPushType,
+                    new HashMap<>());
+
+        } catch (Exception e) {
+            logger.error("还款成功推送消息失败", e);
+        }
+        logger.info("还款成功");
+        return "success";
+    }
+
 
 }

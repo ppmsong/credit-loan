@@ -115,7 +115,7 @@ public class ControllerAspect implements ResponseBodyAdvice<Object>, HandlerInte
                         + " equip:{}  qd:{} signOnOff=", request.getRequestURI(), JSONObject.toJSONString(request.getParameterMap()), equip, qd, config.getSignOnOff());
 
         //不需签名条件：1.签名关闭；2.还款异步回调
-        if ("off".equals(config.getSignOnOff()) || request.getRequestURI().contains("/bill/replaymentNotily") || request.getRequestURI().contains("/risk/callBackOfCarrierGatherFinish")|| request.getRequestURI().contains("/risk/callBackOfCarrierAccreditFinish")|| request.getRequestURI().contains("/risk/callBackOfTaoBaoGatherFinish")) {
+        if ("off".equals(config.getSignOnOff()) || request.getRequestURI().contains("/pay/replaymentNotily") || request.getRequestURI().contains("/risk/callBackOfCarrierGatherFinish")|| request.getRequestURI().contains("/risk/callBackOfCarrierAccreditFinish")|| request.getRequestURI().contains("/risk/callBackOfTaoBaoGatherFinish")) {
             logger.debug("无需签名认证");
             return true;
         }
