@@ -7,7 +7,7 @@ package isec.loan.entity.enums;
  * @date 2019-07-23
  */
 public enum BillStatus {
-    //还款状态 0 未还款 1 已还款  2 提前还款  4 逾期 5 分期还款
+    //还款状态 0 未还款 1 已还款   4 逾期 5 分期还款
     UNREPAY(0, "unrepay"), REPAY(1, "repay"),  OVERDUED(4, "overdued"),STAGE(5, "stage");
 
     private int key;

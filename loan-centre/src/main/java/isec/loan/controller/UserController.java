@@ -20,6 +20,7 @@ import isec.loan.common.In;
 import isec.loan.common.MapBox;
 import isec.loan.core.PromptException;
 import isec.loan.core.StatusCodeEnum;
+import isec.loan.entity.CallApi;
 import isec.loan.entity.Risk;
 import isec.loan.entity.User;
 import isec.loan.entity.UserAppLog;
@@ -187,6 +188,7 @@ public class UserController {
        
         //四要素认证
         JSONObject postData = new JSONObject();
+        postData.put("userId",user.getUserId());
         postData.put("name", userInfo.getName());
         postData.put("idcard", userInfo.getIdcard());
         postData.put("bankcard", bankCardno);
@@ -223,7 +225,14 @@ public class UserController {
 		risk.setResponse(phoneBook);
 		risk.setStatus("success");
 		riskService.saveOrUpdateRisk(risk);
-	}
+		
+		CallApi callApi=new CallApi();
+		callApi.setUserId(user.getUserId());
+		callApi.setApiProvider("loan");
+		callApi.setApiKey(RiskService.PHONE_BOOK_API_KEY);
+ 		callApi.setStatus("success");
+ 		riskService.saveCallApi(callApi);
+ 	}
 	
 	
 	@RequestMapping("/saveUserAppLog")

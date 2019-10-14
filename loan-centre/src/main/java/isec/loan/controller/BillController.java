@@ -162,6 +162,9 @@ public class BillController {
         result.put("r_interest", new BigDecimal(bill.getrInterest()).divide(new BigDecimal(100), 2, RoundingMode.DOWN));
         //状态
         result.put("status", bill.getStatus());
+        if (BillStatus.REPAY.getKey() == bill.getStatus()) {
+            result.put("repayment_amount", 0);
+        }
 
         return result;
 

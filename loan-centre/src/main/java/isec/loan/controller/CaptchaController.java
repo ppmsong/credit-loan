@@ -1,22 +1,29 @@
 package isec.loan.controller;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import isec.base.util.S;
 import isec.base.util.geetest.GeetestLib;
 import isec.base.util.sms.PushSms;
+import isec.loan.common.MapBox;
 import isec.loan.common.redis.Redis;
 import isec.loan.configurer.Config;
 import isec.loan.core.PromptException;
 import isec.loan.core.StatusCodeEnum;
+import isec.loan.entity.CallApi;
 import isec.loan.entity.User;
 import isec.loan.entity.enums.SmsCodeType;
+import isec.loan.service.CallApiService;
 import isec.loan.service.SmsCodeService;
 import isec.loan.service.UserService;
 import org.hibernate.validator.constraints.Length;
 import org.hibernate.validator.constraints.NotEmpty;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -38,6 +45,8 @@ public class CaptchaController {
     SmsCodeService smsCodeService;
     @Autowired
     UserService userService;
+    @Autowired
+    CallApiService callApiService;
 
     @PostMapping(value = "startCaptcha")
     public String startCaptcha(@NotEmpty(message = "请传入用户标识") @RequestParam(name = "user_id") String userId, @NotEmpty(message = "请传入客户端IP") @RequestParam(name = "ip_address") String ipAddress) {
@@ -134,7 +143,17 @@ public class CaptchaController {
             if (SmsCodeType.TYPE_LOGIN.getStrkey().equals(verifyType)) {
                 text = config.getSmsHead() + "您正在进行登陆操作，需要短信验证身份，验证码为：" + smsCode + "，在5分钟内完成验证，如非本人操作请忽视。";
             }
-            PushSms.sendSms(config.getSMSYUNPIANKEY(), text, mobile, config.getSMSYUNPIANAPI());
+            String result = PushSms.sendSms(config.getSMSYUNPIANKEY(), text, mobile, config.getSMSYUNPIANAPI());
+
+            //记录短信发送记录
+            CallApi callApi = new CallApi();
+            callApi.setUserId(user.getUserId());
+            callApi.setApiProvider("yunpian");
+            callApi.setApiKey("sms");
+            callApi.setRequest(JSON.toJSONString(MapBox.instance().put("apikey", config.getSMSYUNPIANKEY()).put("mobile", mobile).put("text", text).toMap()));
+            callApi.setResponse(result);
+            callApi.setStatus("success");
+            callApiService.save(callApi);
 
             data.put("smsCode", smsCode);
             return data;

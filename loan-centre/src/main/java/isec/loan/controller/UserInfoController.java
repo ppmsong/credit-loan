@@ -96,6 +96,7 @@ public class UserInfoController {
         userInfoService.update(userInfo);
 
         JSONObject postData = new JSONObject();
+        postData.put("userId",user.getUserId());
         postData.put("name", name);
         postData.put("idcard", idcard);
 

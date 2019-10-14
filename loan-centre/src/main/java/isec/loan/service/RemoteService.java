@@ -18,6 +18,8 @@ import org.springframework.web.client.RestTemplate;
 import com.alibaba.fastjson.JSONObject;
 
 import isec.loan.core.PromptException;
+import isec.loan.entity.CallApi;
+import isec.loan.mapper.CallApiMapper;
 
 /**
  * @author Administrator
@@ -29,6 +31,9 @@ public class RemoteService {
 
 	@Autowired
 	RestTemplate restTemplate;
+	
+	@Autowired
+	CallApiMapper callApiMapper;
 
 	private static final String[] strDigits = { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d",
 			"e", "f" };
@@ -59,6 +64,13 @@ public class RemoteService {
 	
 	public JSONObject callDx(String url, JSONObject postData) {
 		logger.info("callDx begin url=" + url + " postData=" + postData.toJSONString());
+		//记录调用日志
+		CallApi callApi=new CallApi();
+		callApi.setUserId(postData.getString("userId"));
+		callApi.setApiProvider("dingxiang");
+		callApi.setApiKey(url.replace(DX_BASE_URL, ""));
+		callApi.setRequest(postData.toJSONString());
+		
 		String timestamp = "" + System.currentTimeMillis() / 1000;
 		HttpHeaders headers = new HttpHeaders();
 		headers.add("Content-Type", "application/json;charset=utf-8");
@@ -70,15 +82,23 @@ public class RemoteService {
 				new HttpEntity<String>(postData.toJSONString(), headers), JSONObject.class);
 		if (retResult.getStatusCodeValue() != HttpStatus.SC_OK) {
 			logger.error("顶象接口调用失败 statusCode=" + retResult.getStatusCodeValue());
+			callApi.setStatus("error");
+			callApiMapper.insert(callApi);
 			throw new PromptException("系统出错,请稍后重试");
 		}
 		JSONObject retJson = retResult.getBody();
 		String retCode = retJson.getString("code");
 		if (!"200".equals(retCode)) {
 			logger.error("顶象接口调用出错  retCode=" + retCode + " errorMessage=" + retJson.getString("msg"));
+			callApi.setStatus("fail");
+			callApi.setResponse(retJson.toJSONString());
+			callApiMapper.insert(callApi);
 			throw new PromptException("DX"+retCode,retJson.getString("msg"));
 		}
 		logger.info("callDx end retData=" + retJson.toJSONString());
+		callApi.setStatus("success");
+		callApi.setResponse(retJson.toJSONString());
+		callApiMapper.insert(callApi);
 		return retJson;
 	}
 	

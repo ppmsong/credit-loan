@@ -3,8 +3,11 @@ package isec.loan.service;
 import com.alibaba.fastjson.JSONObject;
 import isec.base.util.S;
 import isec.loan.core.AbstractService;
+import isec.loan.entity.CallApi;
 import isec.loan.entity.Risk;
 import isec.loan.entity.UserInfo;
+import isec.loan.mapper.CallApiMapper;
+
 import org.apache.commons.collections.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -39,6 +42,9 @@ public class RiskService extends AbstractService<Risk> {
 
     @Value(value = "${dingxiang.accreditUrl}")
     private String DINGXIAN_ACCREDIT_URL;
+    
+    @Autowired
+	CallApiMapper callApiMapper;
 
     public String saveMobileRiskScore(String userId, String mobile) {
         JSONObject postData = new JSONObject();
@@ -141,6 +147,7 @@ public class RiskService extends AbstractService<Risk> {
         risk.setMobile(postData.getString("mobile"));
         risk.setName(postData.getString("name"));
         risk.setIdcard(postData.getString("idcard"));
+        postData.put("userId",userId);
         try {
             JSONObject retJson = remoteService.callDx(remoteService.DX_BASE_URL + apiKey, postData);
             risk.setResponse(retJson.toJSONString());
@@ -209,6 +216,10 @@ public class RiskService extends AbstractService<Risk> {
             risk.setUpdateTime(S.getCurrentTimestamp());
             this.updateByWhere(risk, where);
         }
+    }
+    
+    public void saveCallApi(CallApi callApi) {
+    	callApiMapper.insert(callApi);
     }
 
 }
